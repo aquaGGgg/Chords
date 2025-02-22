@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Chords": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:55184;http://localhost:55185"
+    }
+  }
+}
