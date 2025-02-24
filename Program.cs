@@ -9,29 +9,26 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 
-
-
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавление контроллеров
+// Add controllers and setup dependency injection
 builder.Services.AddControllers();
 
-// Настройка подключения к PostgreSQL через EF Core
+// Configure PostgreSQL or SQLite connection
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))); // Ensure connection string is correct
 
-// Регистрация репозиториев
+// Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISongRepository, SongRepository>();
 
-// Регистрация сервисов приложения
+// Register application services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISongService, SongService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 
-// Конфигурация JWT-аутентификации
+// Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]);
 builder.Services.AddAuthentication(options =>
@@ -47,13 +44,24 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = false, // You can set this to true for additional security
+        ValidateAudience = false, // You can set this to true for additional security
         ClockSkew = TimeSpan.Zero
     };
 });
 
-// Подключение Swagger
+// Enable CORS to allow your frontend to make requests
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins", builder =>
+    {
+        builder.AllowAnyOrigin()  // Allow any origin or specify certain domains here
+               .AllowAnyMethod()  // Allow all HTTP methods (GET, POST, etc.)
+               .AllowAnyHeader(); // Allow all headers
+    });
+});
+
+// Setup Swagger for API documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -65,26 +73,19 @@ builder.Services.AddSwaggerGen(c =>
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer"
     });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement{
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
         {
-            new OpenApiSecurityScheme{
-                Reference = new OpenApiReference{
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
                     Id = "Bearer",
                     Type = ReferenceType.SecurityScheme
                 }
             },
             new List<string>()
         }
-    });
-});
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAllOrigins", builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
     });
 });
 
@@ -98,11 +99,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Apply CORS policy and configure HTTPS redirection
+app.UseCors("AllowAllOrigins");
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Map controllers
 app.MapControllers();
 
 app.Run();

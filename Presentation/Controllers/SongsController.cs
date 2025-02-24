@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Chords.Presentation.Controllers
 {
     [ApiController]
-    [Authorize]
+    [Authorize]  // Применяется ко всем методам по умолчанию
     [Route("api/[controller]")]
     public class SongsController : ControllerBase
     {
@@ -18,16 +18,28 @@ namespace Chords.Presentation.Controllers
             _songService = songService;
         }
 
-        // GET /api/songs
+        // GET /api/songs - Без авторизации
         [HttpGet]
+        [AllowAnonymous]  // Отключает авторизацию только для этого метода
         public async Task<IActionResult> GetSongs()
         {
             var songs = await _songService.GetAllSongsAsync();
             return Ok(songs);
         }
 
+        // GET /api/songs/authors
+        [HttpGet("authors")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAuthors()
+        {
+            var songs = await _songService.GetAllSongsAsync();
+            var authors = songs.Select(s => s.Author).Distinct();
+            return Ok(authors);
+        }
+
         // GET /api/songs/{id}
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetSong(int id)
         {
             var song = await _songService.GetSongByIdAsync(id);
@@ -41,8 +53,8 @@ namespace Chords.Presentation.Controllers
         {
             var song = new Song
             {
-                Title = model.Title,
                 Author = model.Author,
+                Title = model.Title,
                 LyricsWithChords = model.LyricsWithChords
             };
 
@@ -57,8 +69,8 @@ namespace Chords.Presentation.Controllers
             var song = await _songService.GetSongByIdAsync(id);
             if (song == null) return NotFound();
 
-            song.Title = model.Title;
             song.Author = model.Author;
+            song.Title = model.Title;
             song.LyricsWithChords = model.LyricsWithChords;
 
             await _songService.UpdateSongAsync(song);

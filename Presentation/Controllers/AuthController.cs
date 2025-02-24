@@ -1,6 +1,7 @@
 ﻿using Chords.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Chords.Presentation.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Chords.Presentation.Controllers
 {
@@ -15,7 +16,9 @@ namespace Chords.Presentation.Controllers
             _authService = authService;
         }
 
+        [AllowAnonymous]
         [HttpPost("register")]
+
         public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
             try
@@ -29,7 +32,9 @@ namespace Chords.Presentation.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
+
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
             try
