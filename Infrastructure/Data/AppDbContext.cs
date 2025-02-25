@@ -14,6 +14,8 @@ namespace Chords.Infrastructure.Data
         public DbSet<Song> Songs { get; set; }
         public DbSet<UserSong> UserSongs { get; set; }
 
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

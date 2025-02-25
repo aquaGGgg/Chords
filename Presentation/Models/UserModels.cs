@@ -10,4 +10,9 @@
     {
         public int SongId { get; set; }
     }
+    public class FavoriteByEmailRequest
+    {
+        public string Email { get; set; }
+        public int SongId { get; set; }
+    }
 }

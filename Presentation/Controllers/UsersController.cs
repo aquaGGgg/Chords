@@ -67,6 +67,45 @@ namespace Chords.Presentation.Controllers
             }
         }
 
+        // Новый endpoint для добавления избранного по email
+        // POST /api/users/favorites/by-email
+        [HttpPost("favorites/by-email")]
+        public async Task<IActionResult> AddFavoriteByEmail([FromBody] FavoriteByEmailRequest model)
+        {
+            try
+            {
+                // Предполагаем, что у вас реализован метод поиска пользователя по email
+                var user = await _userService.GetUserByEmailAsync(model.Email);
+                if (user == null)
+                    return NotFound(new { message = "Пользователь не найден" });
+
+                await _favoriteService.AddFavoriteAsync(user.Id, model.SongId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("favorites/by-email")]
+        public async Task<IActionResult> GetFavoritesByEmail([FromQuery] string email)
+        {
+            try
+            {
+                var user = await _userService.GetUserByEmailAsync(email);
+                if (user == null)
+                    return NotFound(new { message = "Пользователь не найден" });
+
+                var favorites = await _favoriteService.GetFavoritesAsync(user.Id);
+                return Ok(favorites);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         // DELETE /api/users/{userId}/favorites/{songId}
         [HttpDelete("{userId}/favorites/{songId}")]
         public async Task<IActionResult> RemoveFavorite(int userId, int songId)

@@ -28,5 +28,9 @@ namespace Chords.Application.Services
             user.Email = email;
             await _userRepository.UpdateAsync(user);
         }
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
+            return await _userRepository.GetByEmailAsync(email);
+        }
     }
 }

