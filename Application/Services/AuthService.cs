@@ -22,18 +22,17 @@ namespace Chords.Application.Services
 
         public async Task<string> RegisterAsync(string userName, string email, string password)
         {
-            // Проверка на существование пользователя
             var existingUser = await _userRepository.GetByEmailAsync(email);
             if (existingUser != null)
                 throw new Exception("Пользователь с таким email уже существует");
 
-            // Хэширование пароля (например, с помощью BCrypt)
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
             var user = new User
             {
                 UserName = userName,
                 Email = email,
-                PasswordHash = passwordHash
+                PasswordHash = passwordHash,
+                Role = "User"
             };
 
             await _userRepository.AddAsync(user);
@@ -54,12 +53,16 @@ namespace Chords.Application.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Secret"]);
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role)
+            };
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email)
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
                                                             SecurityAlgorithms.HmacSha256Signature)

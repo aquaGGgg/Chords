@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Chords.Domain.Entities;
-using System.Collections.Generic;
-using System.Reflection.Emit;
 
 namespace Chords.Infrastructure.Data
 {
@@ -13,14 +11,12 @@ namespace Chords.Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Song> Songs { get; set; }
         public DbSet<UserSong> UserSongs { get; set; }
-
         public DbSet<ChatMessage> ChatMessages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Конфигурация User
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -28,9 +24,9 @@ namespace Chords.Infrastructure.Data
                 entity.Property(e => e.UserName).IsRequired();
                 entity.Property(e => e.Email).IsRequired();
                 entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.Role).IsRequired();
             });
 
-            // Конфигурация Song
             modelBuilder.Entity<Song>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -39,7 +35,6 @@ namespace Chords.Infrastructure.Data
                 entity.Property(e => e.LyricsWithChords).IsRequired();
             });
 
-            // Конфигурация связи многие-ко-многим через UserSong
             modelBuilder.Entity<UserSong>(entity =>
             {
                 entity.HasKey(us => new { us.UserId, us.SongId });

@@ -15,7 +15,11 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add controllers and setup dependency injection
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
+
 
 // Configure PostgreSQL or SQLite connection
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -30,6 +34,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISongService, SongService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+
+
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -136,5 +142,11 @@ app.MapControllers();
 
 // Map SignalR Hub
 app.MapHub<ChatHub>("/chatHub");
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    DbInitializer.Initialize(db);
+}
 
 app.Run();

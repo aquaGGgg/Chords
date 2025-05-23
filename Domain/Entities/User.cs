@@ -6,8 +6,8 @@
         public string UserName { get; set; }  // Имя пользователя
         public string Email { get; set; }
         public string PasswordHash { get; set; }
+        public string Role { get; set; } = "User";
 
-        // Связь «многие-ко-многим» (например, избранные песни)
         public ICollection<UserSong> FavoriteSongs { get; set; } = new List<UserSong>();
     }
 }

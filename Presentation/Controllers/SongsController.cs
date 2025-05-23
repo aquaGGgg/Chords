@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Chords.Presentation.Controllers
 {
     [ApiController]
-    [Authorize]  // Применяется ко всем методам по умолчанию
+    [Authorize]
     [Route("api/[controller]")]
     public class SongsController : ControllerBase
     {
@@ -18,16 +18,14 @@ namespace Chords.Presentation.Controllers
             _songService = songService;
         }
 
-        // GET /api/songs - Без авторизации
         [HttpGet]
-        [AllowAnonymous]  // Отключает авторизацию только для этого метода
+        [AllowAnonymous]
         public async Task<IActionResult> GetSongs()
         {
             var songs = await _songService.GetAllSongsAsync();
             return Ok(songs);
         }
 
-        // GET /api/songs/authors
         [HttpGet("authors")]
         [AllowAnonymous]
         public async Task<IActionResult> GetAuthors()
@@ -37,7 +35,6 @@ namespace Chords.Presentation.Controllers
             return Ok(authors);
         }
 
-        // GET /api/songs/{id}
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<IActionResult> GetSong(int id)
@@ -47,8 +44,8 @@ namespace Chords.Presentation.Controllers
             return Ok(song);
         }
 
-        // POST /api/songs
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateSong([FromBody] SongRequest model)
         {
             var song = new Song
@@ -62,8 +59,8 @@ namespace Chords.Presentation.Controllers
             return CreatedAtAction(nameof(GetSong), new { id = song.Id }, song);
         }
 
-        // PUT /api/songs/{id}
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateSong(int id, [FromBody] SongRequest model)
         {
             var song = await _songService.GetSongByIdAsync(id);
@@ -77,8 +74,8 @@ namespace Chords.Presentation.Controllers
             return NoContent();
         }
 
-        // DELETE /api/songs/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteSong(int id)
         {
             try
