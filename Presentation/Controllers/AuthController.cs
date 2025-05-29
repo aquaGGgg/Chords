@@ -18,13 +18,12 @@ namespace Chords.Presentation.Controllers
 
         [AllowAnonymous]
         [HttpPost("register")]
-
         public async Task<IActionResult> Register([FromBody] RegisterRequest model)
         {
             try
             {
-                var token = await _authService.RegisterAsync(model.UserName, model.Email, model.Password);
-                return Ok(new { Token = token });
+                var tokens = await _authService.RegisterAsync(model.UserName, model.Email, model.Password);
+                return Ok(tokens);
             }
             catch (Exception ex)
             {
@@ -34,13 +33,27 @@ namespace Chords.Presentation.Controllers
 
         [AllowAnonymous]
         [HttpPost("login")]
-
         public async Task<IActionResult> Login([FromBody] LoginRequest model)
         {
             try
             {
-                var token = await _authService.LoginAsync(model.Email, model.Password);
-                return Ok(new { Token = token });
+                var tokens = await _authService.LoginAsync(model.Email, model.Password);
+                return Ok(tokens);
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest model)
+        {
+            try
+            {
+                var tokens = await _authService.RefreshAsync(model.RefreshToken);
+                return Ok(tokens);
             }
             catch (Exception ex)
             {

@@ -12,6 +12,7 @@ namespace Chords.Infrastructure.Data
         public DbSet<Song> Songs { get; set; }
         public DbSet<UserSong> UserSongs { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +45,16 @@ namespace Chords.Infrastructure.Data
                 entity.HasOne(us => us.Song)
                       .WithMany(s => s.UserSongs)
                       .HasForeignKey(us => us.SongId);
+            });
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(rt => rt.Id);
+                entity.Property(rt => rt.Token).IsRequired();
+                entity.HasOne(rt => rt.User)
+                      .WithMany()
+                      .HasForeignKey(rt => rt.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
